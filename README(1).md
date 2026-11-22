@@ -1,108 +1,176 @@
-# Homework 4 — US Traffic Accidents Dashboard
+# US Traffic Accidents Dashboard 
 
-**Source:** [US-Accidents on Kaggle](https://www.kaggle.com/datasets/sobhanmoosavi/us-accidents/). Uses the reported-accidents dataset (approximately February 2016–March 2023). Built with **Streamlit** and **Plotly**.
+An interactive traffic accident exploration dashboard developed using **Python, Pandas, Streamlit, and Plotly**. It uses a reproducible sample of the [US-Accidents: A Countrywide Traffic Accident Dataset](https://www.kaggle.com/datasets/sobhanmoosavi/us-accidents/) to explore patterns in **reported accidents** by state, estimated traffic-impact severity, weather conditions, and time.
 
-## Dashboard visual theme
+**Dataset coverage:** Approximately February 2016–March 2023, with over 7.7 million source accident reports. **Important:** Accident-report counts are not crash-risk rates; they are affected by traffic exposure, geographic reporting coverage, and incomplete periods.
 
-This version uses a **Midnight Ocean** palette: navy gradient page background,
-soft navy chart panels, teal headings and interactive accents, and coordinated
-blue / teal / amber / coral severity colors. KPI metrics and insight cards have
-subtle borders and elevated panels; the Plotly map uses a matching dark basemap.
-The sidebar uses the same palette.
+## 1.Requirements covered
 
-The theme is configured in **`.streamlit/config.toml`** and enhanced with CSS inside
-`app.py`. Keep that folder when publishing the application so native Streamlit
-widgets also appear in the intended dark theme. The chart colors remain
-accessible as separate colors rather than relying only on a continuous scale.
+| Requirement | Implementation |
+| --- | --- |
+| Data preparation | Pandas-based CSV processing, missing-value checks, cleaning, and documentation |
+| State-based filtering | Select one or more states; an empty selection includes all states |
+| Severity filtering | Select any combination of Severity 1, 2, 3, and 4 |
+| Time filtering | Interactive year-range slider |
+| Accident location map | Plotly interactive map using latitude and longitude, colored by severity |
+| Severity distribution | Plotly bar chart showing report counts for severity levels 1–4 |
+| Weather and traffic conditions | Plotly bar charts for weather groups or binned visibility, temperature, and wind speed |
+| Time trend | Monthly Plotly line chart, plus an optional hourly bar chart |
+| Insights | Filter-responsive KPIs and short, data-supported observations |
+| Empty selections | Graceful messages when filters return no records |
 
-## 1. Install dependencies
+The application has **four tabs**: **Map & severity**, **Weather**, **Time trend**, and **Data preparation**. The map and severity chart share the first tab. The dashboard uses a dark visual presentation with distinct colors for the four severity levels; it does not require a separate `.streamlit/config.toml` to run.
 
-Run in the folder containing `app.py` and `prepare_data.py`:
+### A. New York and Virginia (NY + VA)
+
+**Filters shown:** NY and VA; 2016–2023; Severities 1–4; all weather groups. The map-point limit only changes how many markers are drawn, not the counts in the other charts.
+
+**Reports in the filtered sample:** **12,912** across **2 selected states**.
+
+| Traffic-impact severity | Sampled reports | Share of selected reports |
+| --- | ---: | ---: |
+| 1 (least traffic impact) | 86 | 0.7% |
+| 2 | 9,812 | 76.0% |
+| 3 | 2,431 | 18.8% |
+| 4 (greatest traffic impact) | 583 | 4.5% |
+| **Total** | **12,912** | **100%** |
+
+**Finding:** Severity **2** is the most frequently recorded level, with **9,812 reports (76.0%)**. Severity **4** accounts for **583 reports (4.5%)**. These levels refer to estimated **traffic disruption**, not injury severity or fatalities.
+
+| Weather group | Sampled reports |
+| --- | ---: |
+| Cloudy | 5,869 |
+| Clear / Fair | 4,675 |
+| Rain | 1,175 |
+| Snow / Ice | 501 |
+| Unknown | 385 |
+| Fog / Mist / Haze | 188 |
+| Thunderstorm | 112 |
+| Other | 7 |
+
+**Finding:** **Cloudy** is the most frequently recorded **known** weather group (**5,869 reports**). The distribution does **not** establish that cloudy weather causes more accidents. `Unknown` observations remain in the weather-group chart.
+
+**Monthly trend:** The NY + VA screenshot shows a peak in 2022, but the exact peak-month count is **not legible** in the available screenshot. Verify it using the app's hover tooltip or the calculation in Section 7 before citing a number for this filter combination.
+
+### B. New York, Arkansas, and Colorado (NY + AR + CO)
+
+A different dashboard screenshot used **NY, AR, and CO** with 2016–2023, all severity levels, and all weather groups. It showed:
+
+- **9,326** reports across **3 states**.
+- **Severity 2:** most frequent, at **73.6%** of selected reports.
+- **Severity 4:** **4.6%** of selected reports.
+- **Cloudy:** most frequently recorded known weather group, with **4,584** reports.
+- **September 2022:** highest observed month, with **311** sampled reports.
+
+**Do not combine** the September 2022 count of **311** from the NY + AR + CO view with the **12,912-report** NY + VA view. They are different filter selections.
+
+## 2. Data preparation methodology
+
+The script `prepare_data.py`:
+
+1. Reads `US_Accidents_March23.csv` in **250,000-row chunks** to limit memory use.
+2. Scans the original source for missing values in relevant fields (`ID`, `State`, `Severity`, `Start_Time`, `Start_Lat`, `Start_Lng`, `Weather_Condition`, `Visibility(mi)`, `Temperature(F)`, and `Wind_Speed(mph)`).
+3. Selects an approximately **2% independent random sample** with a fixed NumPy seed of **42**; the exact number sampled can vary slightly because each row is selected independently.
+4. Excludes sampled records with blank IDs/states, invalid dates, severity outside 1–4, missing/invalid coordinates, or duplicate IDs **within the sample**. Exclusion counts are recorded sequentially.
+5. Replaces missing weather descriptions with `Unknown`, classifies descriptions into weather groups, retains missing numeric weather measurements, and changes negative visibility/wind-speed readings to missing.
+6. Converts `Start_Time` to datetime and derives `Year`, `Month`, `Hour`, and `Day_of_Week` using the source's local wall-clock timestamps without timezone conversion.
+7. Creates the cleaned data file, a state-year summary, and a JSON preparation report. The original Kaggle CSV is not modified.
+
+**Generated outputs:**
+
+- `US_Accidents_Cleaned.csv` — the cleaned sample used by the dashboard.
+- `Accidents_By_State_Year.csv` — optional state/year aggregated counts.
+- `preparation_report.json` — source and sample counts, missing values, sequential exclusions, sampling settings, and limitations.
+
+**Data-preparation counts:** The exact full-dataset rows scanned, sampled rows removed, and final cleaned-sample size must come from your own `preparation_report.json`. The **12,912** and **9,326** figures above are *filtered dashboard results*, not source-row or full-cleaned-sample totals.
+
+## 3. Installation and running locally
+
+Install Python 3.10+ and run these commands in the project directory:
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-To run this from Jupyter Notebook instead, use `%pip install -r requirements.txt` in a cell.
-
-## 2. Prepare the data (required once)
-
-Download and unzip `US_Accidents_March23.csv` from Kaggle. Kagglehub users can find the file path by running:
-
-```python
-import kagglehub
-from pathlib import Path
-csv_path = Path(kagglehub.dataset_download('sobhanmoosavi/us-accidents')) / 'US_Accidents_March23.csv'
-print(csv_path)
-```
-
-Kagglehub is optional and used only to **download** the source CSV; it is not a dependency of the deployed app.
-
-In the terminal, run (substitute your actual CSV path):
+Download the original Kaggle CSV and run:
 
 ```bash
 python prepare_data.py "C:/full/path/to/US_Accidents_March23.csv"
 ```
 
-Alternatively, in Jupyter Notebook, with the project folder as your working directory:
+Or, to download through Kagglehub, install it and use the preparation script's built-in option:
 
-```python
-import subprocess, sys
-subprocess.run([sys.executable, 'prepare_data.py', str(csv_path)], check=True)
+```bash
+python -m pip install kagglehub
+python prepare_data.py --download-kaggle
 ```
 
-**Fix for the previous "Data file not found" error:** `prepare_data.py` now **always writes its outputs alongside `app.py` by default**, not wherever the terminal happened to be opened.
+Kagglehub is needed only for downloading the **original** CSV; it is **not** needed when the hosted app reads the prepared CSV.
 
-The script creates these three files beside `app.py`:
-
-- `US_Accidents_Cleaned.csv` — reproducible approximately 2% random sample
-- `Accidents_By_State_Year.csv` — aggregated sample counts (optional for extra reporting)
-- `preparation_report.json` — source missing values, exclusions, sample size and caveats
-
-The method streams the full original source CSV in chunks of 250,000 rows, records missing values in all original rows for selected columns, and randomly samples each row with probability 2% (seed 42). It cleans sampled records, drops duplicate IDs **within the sample**, replaces missing weather descriptions with `Unknown`, and retains missing numerical weather readings as missing. Dates are parsed and Year/Month/Hour/Day_of_Week are derived. The original source is not modified.
-
-If your cleaned CSV becomes too large to upload to GitHub, rerun with `--fraction 0.01` for an approximate 1% sample (document the updated value). The dashboard reads the true fraction from the preparation report.
-
-## 3. Start the app locally
+Then start Streamlit:
 
 ```bash
 python -m streamlit run app.py
 ```
 
-You should see **four interactive Plotly visualizations** in tabs: (1) sampled location map (Plotly `scatter_map`), (2) severity distribution, (3) weather conditions (with optional binned visibility / temperature / wind speed), and (4) monthly trend. An optional hourly plot is included. All required visuals respond to state, severity, year-range, and weather sidebar filters. The map may downsample **filtered** points independently for display speed. Empty results show a message rather than an exception.
+If using Jupyter Notebook for installation, use `%pip install -r requirements.txt` and then run the commands in a terminal. `prepare_data.py` writes its outputs into its own folder by default, alongside `app.py`, avoiding the earlier **data file not found** error.
 
-## 4. Deploy and submit
+## 4. Files to upload to GitHub
 
-Upload these **required runtime files together** to your GitHub repository:
+Repository: [Fire-99/USTrafficStreamlitApp](https://github.com/Fire-99/USTrafficStreamlitApp)
 
 ```text
-app.py
-requirements.txt
-US_Accidents_Cleaned.csv
-preparation_report.json
+USTrafficStreamlitApp/
+├── app.py                       # Main dashboard
+├── prepare_data.py              # Reproducible data preparation
+├── report_results.py            # Optional overall results helper
+├── requirements.txt             # Packages for deployment
+├── README.md                    # Project instructions and findings
+├── US_Accidents_Cleaned.csv     # REQUIRED: prepared dataset
+├── preparation_report.json      # REQUIRED for documented methods tab
+└── Accidents_By_State_Year.csv  # Optional aggregate output
 ```
 
-Also include `prepare_data.py`, `README.md`, **`.streamlit/config.toml`**, and (optional) `Accidents_By_State_Year.csv` for reproducibility. **Do not upload the original several-GB CSV**. Do not omit the cleaned CSV: Streamlit Community Cloud cannot read a local file that exists only on your computer.
+```bash
+python prepare_data.py "C:/full/path/to/US_Accidents_March23.csv" --fraction 0.01
+```
 
-1. Create or open a GitHub repo containing the files above.
-2. Sign in to https://share.streamlit.io and create a new app from the repository. Select `app.py` as the entrypoint.
-3. Wait until the deployment finishes and verify that all tabs load, filters work, and there is no missing-file error.
-4. Test the **public** app URL in a private/incognito browser.
-5. Submit the code, the working public Streamlit link, and a report containing **screenshots from the actual running dashboard** (not just the link).
+This creates an approximately 1% sample. **If you change the sampling fraction, regenerate the results and report screenshots**; the 2%-sample figures listed above may no longer apply. For very large files, use an appropriate supported hosting method rather than committing the raw Kaggle CSV.
 
-**Public Streamlit app URL:** _Insert your deployed URL here after deployment._
 
-## 5. Suggested report structure (according to Homework 4)
+## 5. How to verify results from the actual CSV
 
-1. **Introduction:** Dataset, purpose, intended audience.
-2. **Data Exploration and Preparation:** Original record count and missingness from `preparation_report.json`, 2% sample, exclusion counts, date features and limitations.
-3. **Dashboard Design:** Sidebar + five tabs; insert a **screenshot of the main dashboard**.
-4. **Key Features and Visualizations:** State/severity/year/weather filters, map, severity, weather, monthly trend; insert screenshots of required visualizations.
-5. **Insights and Findings:** Use numeric values actually shown in your running dashboard (e.g., leading severity class, peak month, most frequent recorded weather group). Do not invent results.
-6. **Future Improvements:** Add vehicle-miles-traveled/traffic denominators, consistency checks, more rigorous coverage validation, and performance improvements.
-7. **Conclusion:** What the interactive dashboard reveals, with descriptive caveats.
-8. **References:** Kaggle data source, Plotly and Streamlit docs.
+To generate **overall, all-state** results for the entire cleaned sample (not the NY + VA subset), run:
 
-## Important interpretation note
+```bash
+python report_results.py
+```
 
-Severity 1–4 describes **impact on traffic**, not injury severity. Sampled report counts are **not risk estimates**. Periods in the original data are incomplete and reporting may vary by location/time. Associations with weather do not establish causal effects without exposure data.
+To obtain an **exact peak month for the NY + VA filtered view**, run this Python code in the folder containing the cleaned CSV:
+
+```python
+import pandas as pd
+
+accidents = pd.read_csv("US_Accidents_Cleaned.csv", parse_dates=["Start_Time"])
+selected = accidents[
+    accidents["State"].isin(["NY", "VA"])
+    & accidents["Year"].between(2016, 2023)
+    & accidents["Severity"].isin([1, 2, 3, 4])
+]
+monthly_counts = selected.groupby(selected["Start_Time"].dt.to_period("M")).size()
+print("Total reports:", len(selected))
+print("Peak month:", monthly_counts.idxmax())
+print("Peak month reports:", int(monthly_counts.max()))
+```
+
+If your output differs from the screenshots, confirm that you are using the **same cleaned dataset** and filters. Do not transfer numerical findings between filter configurations.
+
+## 6. Limitations and references
+
+- **Severity 1–4 estimates impact on traffic**, not the number or seriousness of injuries or fatalities.
+- Counts describe **reported accidents in the chosen sample**, not crash probability or risk. Higher recorded counts may reflect traffic exposure, availability of reports, or changes in coverage.
+- Weather patterns are **descriptive associations**, not evidence that weather conditions cause crashes.
+- The dataset contains incomplete **2016** and **2023** coverage; monthly and state comparisons require caution.
+- Map display limits affect only plotted markers and do **not** reduce the records used for other charts.
+
+**References:** [US-Accidents (Kaggle)](https://www.kaggle.com/datasets/sobhanmoosavi/us-accidents/) · [Streamlit documentation](https://docs.streamlit.io/) · [Plotly Python](https://plotly.com/python/) · [Pandas documentation](https://pandas.pydata.org/docs/) · [NumPy documentation](https://numpy.org/doc/)
