@@ -1,0 +1,96 @@
+{
+  "source": "US-Accidents, https://www.kaggle.com/datasets/sobhanmoosavi/us-accidents/",
+  "original_filename": "US_Accidents_March23.csv",
+  "columns_selected": [
+    "ID",
+    "State",
+    "Severity",
+    "Start_Time",
+    "Start_Lat",
+    "Start_Lng",
+    "Weather_Condition",
+    "Visibility(mi)",
+    "Temperature(F)",
+    "Wind_Speed(mph)"
+  ],
+  "source_rows_inspected": 7728394,
+  "source_missing_counts_selected_columns": {
+    "ID": 0,
+    "State": 0,
+    "Severity": 0,
+    "Start_Time": 0,
+    "Start_Lat": 0,
+    "Start_Lng": 0,
+    "Weather_Condition": 173459,
+    "Visibility(mi)": 177098,
+    "Temperature(F)": 163853,
+    "Wind_Speed(mph)": 571233
+  },
+  "sampling_method": "Independent random row sampling streamed through the entire CSV",
+  "sampling_fraction": 0.02,
+  "random_seed": 42,
+  "chunk_size": 250000,
+  "sampled_rows_before_cleaning": 154259,
+  "sample_missing_counts_before_cleaning": {
+    "ID": 0,
+    "Severity": 0,
+    "Start_Time": 0,
+    "Start_Lat": 0,
+    "Start_Lng": 0,
+    "State": 0,
+    "Temperature(F)": 3239,
+    "Visibility(mi)": 3546,
+    "Wind_Speed(mph)": 11443,
+    "Weather_Condition": 3459
+  },
+  "sample_exclusions_applied_sequentially": {
+    "Missing or blank ID": 0,
+    "Missing or blank State": 0,
+    "Invalid Start_Time": 0,
+    "Invalid Severity (must be 1 to 4)": 0,
+    "Invalid latitude/longitude": 0,
+    "Duplicate ID among sampled rows": 0
+  },
+  "total_sampled_rows_excluded": 0,
+  "final_cleaned_sample_rows": 154259,
+  "final_sample_missing_counts": {
+    "ID": 0,
+    "Severity": 0,
+    "Start_Time": 0,
+    "Start_Lat": 0,
+    "Start_Lng": 0,
+    "State": 0,
+    "Temperature(F)": 3239,
+    "Visibility(mi)": 3546,
+    "Wind_Speed(mph)": 11443,
+    "Weather_Condition": 0,
+    "Weather_Group": 0,
+    "Year": 0,
+    "Month": 0,
+    "Hour": 0,
+    "Day_of_Week": 0
+  },
+  "invalid_negative_weather_values_set_to_missing": {
+    "Visibility(mi)": 0,
+    "Wind_Speed(mph)": 0
+  },
+  "cleaned_sample_earliest_start": "2016-01-14 20:18:33",
+  "cleaned_sample_latest_start": "2023-03-31 22:53:45",
+  "cleaned_csv_size_mb": 16.13,
+  "missing_value_policy": {
+    "essential_fields": "Reject sampled rows with missing ID, State, date/time, severity, or coordinates",
+    "weather_condition": "Replace missing/blank descriptions with Unknown",
+    "numeric_weather": "Keep missing readings as NaN; convert negative visibility/wind speed to NaN"
+  },
+  "notes": [
+    "Missing-value counts for selected original columns are calculated across the FULL source file.",
+    "Validity exclusions and duplicate checks apply to the RANDOM SAMPLE, not all 7.7M source records.",
+    "Rows failing multiple criteria are counted only at their first failed criterion.",
+    "Sampling is Bernoulli, so sample size is approximate rather than exactly a fixed percentage.",
+    "Severity 1-4 measures traffic impact/delay, not injury/fatality severity.",
+    "Original timestamps are treated as local wall times without timezone conversion.",
+    "Weather descriptions were grouped heuristically; categories may be imperfect.",
+    "Incomplete periods, changing reporting coverage, and lack of exposure data limit comparisons.",
+    "All counts in the dashboard are from the cleaned sample, not estimates of population totals."
+  ]
+}
